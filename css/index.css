@@ -1,5 +1,10 @@
-.body {
-    background-image: "images/melencolia1.jpg";
-    background-color: white;
+html {
+    background: url("../images/melencolia1.jpg") no-repeat center center fixed;
+    background-size: cover;
 }
-	
+
+.content {
+    max-width: 400px;
+    margin: auto;
+}
+
