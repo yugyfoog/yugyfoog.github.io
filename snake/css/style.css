@@ -1,0 +1,25 @@
+body {
+  margin: 40px;
+}
+
+.wrapper {
+  display: grid;
+  grid-template-columns: 460px 200px auto;
+  grid-template-rows: 460px;
+  background-color: black;
+  color: #f80;
+}
+
+.box {
+  display: grid;
+  justify-content: center;
+  align-items: center;
+  background-color: black;
+  color: #f80;
+  padding: 20px;
+  font-family: courier;
+}
+
+.score {
+  font-family: courier;
+}

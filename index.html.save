@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en-US">
+  <head>
+    <title>My Website!</title>
+    <script src="https://fred-wang.github.io/mathjax.js/mpadded-min.js"></script>
+  </head>
+  <body>
+    <img src="images/me.jpg" width="200" height="267" alt="picture of me" title="Don't criticize, my mother took this picture">
+    <h1>Mark Kamradt</h1>
+    <hr>
+    <h1>Programming Projects</h1>
+    <h2><abbr>MPL</abbr> Programming Language</h2>
+    <a href="https://github.com/yugyfoog/MPL">github.com/yugyfoog/MPL</a>
+    <p>
+      <abbr>MPL</abbr> is a mathematical programming language that I designed.
+      It is a simple scripting language.
+      It can be used interactivly but that was not my intension,
+      so don't expect it to be user friendly.
+
+      I wanted a small/simple language that can be used for calculations
+      that are too cumbersome for a hand-held calculator, yet dosen't require
+      a real programming language.
+
+      I also don't like how many mathematical programming languages
+      conflate arrays and vectors/matricies. I wanted a language
+      that had array semantics so multipling two arrays produces
+      an array of products. However, for multipling two vectors I want a
+      dot product and multipling a <em>n</em>x<em>m</em> matrix with a
+      <em>m</em>x<em>p</em> matrix should result in a
+      <em>n</em>x<em>p</em> matrix.
+    </p>
+    <p>
+      This interpreter is mostly finished for the core language.
+      I still need more work on error checking and reporting.
+      There is still a lot of work to do for the standard library.
+    </p>
+
+    <! add more programming projects here>
+
+    <! put programming collaborations here>
+
+    
+    <h1>Favorite Links</h1>
+    <h2>Music Groups I'm In</h2>
+    <a href="http://jackbrownband.com">Jack Brown Band</a>
+    <a href="http://moorparksymphony.com">Moorpark Symphony Orchestra</a>
+
+    <h2>C++ Reference</h2>
+    <a href="http://cplusplus.com">cplusplus.com</a>
+    <p>My favorite online C++ reference. Unfortunately it's not
+      keeped up to date with the latest C++ standards.
+      For the latest stuff use <a href="http://cppreference.com">cppreference.com</a>.
+      <a href="https://isocpp.github.io/CppCoreGuidelines/CppCoreGuidelines">
+	C++ Core Guidelines
+      </a> Useful tips for C++.
+    </p>
+    <h1>Why yugyfoog?</h1>
+    <p>
+      Many years ago I needed a watch.
+      While looking at watches in a store I saw some Mickey Mouse watches.
+      I remembered how when I was a kid a wanted one.
+      There were other Disney watches there too and I noticed that a goofy watch was backwards.
+      Something about a watch whose hands moved counter clockwise appealed to me.
+      There's no reason a clock's hands move clockwise other than convention. So why not?
+      I didn't buy the watch then but must have told someone about it because next Christmas
+      I had one.
+      After that every birthday and Christmas I receved more and more Goofy presents.
+      I became the <q>Goofy Guy</q> of the family.
+    </p>
+    <p>
+      Years later, but still awhile ago, I was signing up for some sort of instant messaging service.
+      I didn't want to use my real name (boring) but I have no nickname.
+      So I first choose <q>goofyguy</q>. But that was taken. Then I though spelling "goofyguy" backwards (like the watch)
+      would be a goofy thing to do. The rest is history.
+    </p>
+    <hr>
+    <footer>
+      This website is best viewed with the
+      <a href="http://lynx.browser.org">Lynx</a> browser.
+    </footer>
+  </body>
+</html>
