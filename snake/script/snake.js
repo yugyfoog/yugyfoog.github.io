@@ -263,29 +263,22 @@ function clear_snake_tail() {
 }
 
 function game_key(event) {
-  switch (event.key) {
-  case "Down":
+  console.log(event.code)
+  switch (event.code) {
   case "ArrowDown":
-  case "S":
-  case "s":
+  case "KeyS":
     snake_direction = direction.DOWN;
     break;
-  case "Up":
   case "ArrowUp":
-  case "W":
-  case "w":
+  case "KeyW":
     snake_direction = direction.UP;
     break;
-  case "Left":
   case "ArrowLeft":
-  case "A":
-  case "a":
+  case "KeyA":
     snake_direction = direction.LEFT;
     break;
-  case "Right":
   case "ArrowRight":
-  case "D":
-  case "d":
+  case "KeyD":
     snake_direction = direction.RIGHT;
     break;
   }
