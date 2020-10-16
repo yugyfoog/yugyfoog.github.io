@@ -1,3 +1,34 @@
+// flow of control
+//
+//  before game:
+//
+//     play_game() -- initialize game and set key press callback to start_game()
+//
+//     start_game() -- starts game. Set key press callback to game_key(), timer callback to on_clock()
+//
+//  in game:
+//
+//     game_key() -- set snake_direction to key pressed
+//
+//     on_clock() -- main game logic. calls end_game() when game over.
+//
+//     end_game() -- set timer callback to flash_screen()
+//
+//  game over:
+//
+//     flash_screen() -- inverts screen color. calls check_score() after 12 times. (6 inversion cycles)
+//
+//     check_score() -- if need to update highscore list
+//                          input change callback to update_high_scores();
+//                      else
+//                          call between_games()
+//
+//     update_high_scores() -- change score list, call between_games()
+//
+//     between_games() -- updates high score list, sets key press callback to start_game()
+//
+
+
 let black = "black";
 let amber = "#f80";
 
@@ -11,6 +42,38 @@ let score_timer = 10;
 let flash_count = 13;
 
 let field = Array(42*42); // array of bool
+
+let high_scores = [ {
+    name: "mark",
+    score: 0
+}, {
+    name: "mark",
+    score: 0
+}, {
+    name: "mark",
+    score: 0
+}, {
+    name: "mark",
+    score: 0
+}, {
+    name: "mark",
+    score: 0
+}, {
+    name: "mark",
+    score: 0
+}, {
+    name: "mark",
+    score: 0
+}, {
+    name: "mark",
+    score: 0
+}, {
+    name: "mark",
+    score: 0
+}, {
+    name: "Randy",
+    score: 0
+}];
 
 class Point {
   constructor(x, y) {
@@ -68,8 +131,6 @@ let snake_build = 0;
 let snake_direction = direction.DOWN;
 
 function set_point(p) {
-  if (typeof(p) == "undefined")
-    console.log("variable p is undefined");
   field[p.indx()] = true;
 }
 
@@ -118,7 +179,7 @@ function flash_screen() {
   flash_count -= 1;
   if (flash_count <= 0) {
     clearInterval(timer);
-    between_games();
+    check_score();
   }
   else {
     if (flash_count%2 == 0) {
@@ -250,11 +311,7 @@ function on_clock() {
 let timer = {};
 
 function set_snake_head(p) {
-  if (typeof(p) == "undefined")
-    console.log("variable p is undefined (2)");
   snake[snake_head] = p;
-  if (typeof(p) == "undefined")
-    console.log("variable p is undefined (2)");
   set_point(p);
 }
 
@@ -263,7 +320,6 @@ function clear_snake_tail() {
 }
 
 function game_key(event) {
-  console.log(event.code)
   switch (event.code) {
   case "ArrowDown":
   case "KeyS":
@@ -285,35 +341,88 @@ function game_key(event) {
 }
 
 function start_game(e) {
-  document.removeEventListener("keydown", start_game);
-  document.addEventListener("keydown", game_key);
-  init_array();
-  score = 0;
-  display_score();
-  snake_head = 0;
-  snake_tail = 0;
-  snake_direction = direction.DOWN;
-  snake_grow = 5;
-  egg_on = false;
-  egg_timer = 20;
-  let p = new Point(20, 20);
-  if (typeof(p) == "undefined")
-    console.log("variable p is undefined (1)");
-  set_snake_head(p);
-  timer = setInterval(on_clock, 100);
+    document.removeEventListener("keydown", start_game);
+    document.addEventListener("keydown", game_key);
+    let message = document.getElementById("message");
+    message.textContent = "";
+    init_array();
+    score = 0;
+    display_score();
+    snake_head = 0;
+    snake_tail = 0;
+    snake_direction = direction.DOWN;
+    snake_grow = 5;
+    egg_on = false;
+    egg_timer = 20;
+    let p = new Point(20, 20);
+    set_snake_head(p);
+    timer = setInterval(on_clock, 100);
 }
 
+function update_high_scores(e) {
+    let name = e.target.value;
+ 
+    let input = document.getElementById("input");
+    while (input.firstChild)
+	input.removeChild(input.firstChild);
+
+    for (i = high_scores.length-2; i >= 0; i--) {
+	if (high_scores[i].score < score) {
+	    high_scores[i+1].score = high_scores[i].score;
+	    high_scores[i+1].name = high_scores[i].name;
+	}
+	else
+	    break;
+    }
+    high_scores[i+1].score = score;
+    high_scores[i+1].name = name;
+
+    display_high_scores();
+    between_games();
+}
+
+
+function check_score() {
+    if (score > high_scores[high_scores.length-1].score) {
+	let message = document.getElementById("message");
+	message.textContent = "Enter your name";
+	let input = document.getElementById("input");
+	let name = document.createElement("input");
+	name.addEventListener("change", update_high_scores);
+	input.appendChild(name);
+	name.focus();
+    }
+    else
+	between_games();
+}
+
+
 function between_games() {
-  document.addEventListener("keydown", start_game);
+    let message = document.getElementById("message");
+    message.textContent = "Press a key to play again";
+    document.addEventListener("keydown", start_game);
+}
+
+function display_high_scores() {
+    let element = document.getElementById("highscores");
+
+    while (element.firstChild)
+	element.removeChild(element.firstChild);
+    
+    for (i = 0; i < high_scores.length; i++) {
+	let div = document.createElement('div');
+	div.textContent = `${i+1} ${high_scores[i].name} ${high_scores[i].score}`;
+	element.appendChild(div);
+    }
 }
 
 function play_game() {
-  let score = document.getElementById("score");
-  score.textContent = "Press a key to play Snake!"
-  document.addEventListener("keydown", start_game);
+    init_array();
+    draw_array();
+    display_high_scores();
+    let message = document.getElementById("message");
+    message.textContent = "Press a key to play Snake!"
+    document.addEventListener("keydown", start_game);
 }
-
-init_array();
-draw_array();
 
 play_game();

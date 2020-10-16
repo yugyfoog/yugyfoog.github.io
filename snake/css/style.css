@@ -6,6 +6,14 @@ body {
   margin: 40px;
 }
 
+input {
+    outline: 0;
+    border: none;
+    color: #f80;
+    background-color: black;
+}
+
+
 .wrapper {
   display: grid;
   grid-template-columns: 460px 200px auto;
@@ -15,6 +23,16 @@ body {
 }
 
 .box {
+  display: grid;
+  justify-content: center;
+  align-items: center;
+  background-color: black;
+  color: #f80;
+  padding: 20px;
+  font-family: courier;
+}
+
+.highscores {
   display: grid;
   justify-content: center;
   align-items: center;
