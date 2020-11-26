@@ -1,0 +1,35 @@
+<html>
+  <head>
+    <title>Game</title>
+    <style>
+      body {
+	  margin: 0;
+      }
+      canvas {
+	  width: 100vw;
+	  height: 100vh;
+	  display: block;
+      }
+    </style>
+  </head>
+  <body>
+    <canvas id="canvas3d"></canvas>
+    <script id="vertex_shader" type="GLSL">
+      attribute vec4 position;
+ 
+      void main() {
+	  gl_Position = position;
+      }
+    </script>
+    <script id="fragment_shader" type="GLSL">
+      precision mediump float;
+      
+      uniform vec4 color;
+      
+      void main() {
+	  gl_FragColor = color;
+      }
+    </script>
+    <script src="game.js" type="module"></script>
+  </body>
+</html>
