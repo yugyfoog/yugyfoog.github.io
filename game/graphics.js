@@ -50,6 +50,11 @@ export function create_shader(gl, type, source) {
     gl.deleteShader(shader);
 }
 
+export function clear_screen(gl) {
+    resize_display(gl);
+    clear(gl);
+}
+
 // resize the gl.canvas size to match the html canvas size.
 //    call this function before drawing each frame if the html canvas can change its size.
 

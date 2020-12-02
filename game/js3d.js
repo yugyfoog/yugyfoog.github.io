@@ -2,38 +2,7 @@ import * as g from "./graphics.js";
 import * as mm from "./mmath.js";
 import * as room from "./room.js";
 
-export class Stage {
-    constructor(s, v) {
-	this.scene = s;  // BranchGroup
-	this.view = v; // View
-    }
-
-    update(time) {
-	let theta = 0.1;
-	let st = Math.sin(theta);
-	let ct = Math.cos(theta);
-	let R = new Float32Array([
-	    ct, 0, st,
-	    0, 1, 0,
-	    -st, 0, ct]);
-	    
-	room.T1.rotate(R);
-    }
-    
-    draw(gl, time) {
-	g.resize_display(gl); // only necessary if the HTML canvis can change size
-
-	// clear canvas
-
-	g.clear(gl);
-	this.scene.draw(gl, this.view, time);
-    }
-}
-
-// BranchGroup is used to group objects in the scene tree when
-// we need more than one object object at a node.
-
-export class BranchGroup {
+export class Group {
     constructor() {
 	this.branch = Array();
     }
@@ -43,10 +12,8 @@ export class BranchGroup {
     }
 
     draw(gl, view, time) {
-	let cnt = 1;
 	for (let obj of this.branch) {
 	    obj.draw(gl, view, time);
-	    cnt++;
 	}
     }
 }
@@ -105,17 +72,6 @@ export class Translate {
 
 
 let _movable;
-
-/*
-
-
-y = Ax + b
-
-y = (A(Bx + b) + a)
-
-
-*/
-
 
 function key_down(event) {
     switch (event.code) {
@@ -201,10 +157,9 @@ export class Movable {
     constructor(obj, trans) {
 	this.object = obj;
 	this.transform = trans;  // trans must be an orthogonal affine transform
-	this.movement = new Float32Array([1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0]);
+	_movable = new Float32Array([1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0]);
 	document.addEventListener("keydown", key_down);
 	document.addEventListener("keyup", key_up);
-	_movable = this.movement;
     }
     
     draw(gl, view, time) {
@@ -1351,4 +1306,41 @@ export class View {
 
 export function random_color() {
     return new Float32Array([Math.random(), Math.random(), Math.random()]);
+}
+
+export class Camera {
+    constructor(obj, f, l) {
+	this.object = obj;
+	this.fov = f;
+	this.location = l;
+    }
+
+    draw(gl, t) {
+	g.clear_screen(gl);
+	let x2 = build_view(gl,this.fov, this.location);
+	this.object.draw(gl, x2, t);
+    }
+}
+
+export class Follower {
+    constructor(obj, f, l, p) {
+	this.object = obj;
+	this.fov = f;
+	this.location = l;
+	this.followee = p;
+    }
+
+    draw(gl, t) {
+	let x1 = new Float32Array(this.followee.transform);
+
+	x1[9] += 2*x1[3] + 10*x1[6];
+	x1[10] += 2*x1[4] + 10*x1[7];
+	x1[11] += 2*x1[5] + 10*x1[8];
+	
+	this.location = x1;
+	
+	g.clear_screen(gl);
+	let v = build_view(gl, this.fov, this.location);
+	this.object.draw(gl, v, t);
+    }
 }

@@ -5,7 +5,7 @@ import * as floor from "./floor.js";
 import * as m from "./mmath.js";
 
 export function scene_graph(gl) {
-    let room = new js3d.BranchGroup();
+    let room = new js3d.Group();
 
     // floor
     room.add_object(new floor.floor(gl));
