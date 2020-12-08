@@ -171,7 +171,7 @@ export function multiply_homogeneous_homogeneous(A, B) {
     return C;
 }
     
-// calculate the invere of an affine transform where the linear part is orthogonal
+// calculate the inverse of an affine transform where the linear part is orthogonal
 
 export function inverse_orthogonal(A) {
     let B = new Float32Array(12);
@@ -186,4 +186,108 @@ export function inverse_orthogonal(A) {
     return B;
 }
 
+export function interpolate_rotation(X1, X2, scale) {
+    let q1 = matrix_to_quaternion(X1);
+    let q2 = matrix_to_quaternion(X2);
+    return quaternion_to_matrix(slerp(q1, q2, scale));
+}
+
+function matrix_to_quaternion(M) {
+    let t;
+    let q;
+    let f;
+    if (M[8] < 0) {
+	if (M[0] > M[4]) {
+	    t = 1 + M[0] - M[4] - M[8];
+	    f = 2*Math.sqrt(t);
+	    q = new Float32Array([(M[5]-M[7])/f, t/f, (M[1]+M[3])/f, (M[6]+M[2])/f]);
+	}
+	else {
+	    t = 1 - M[0] + M[4] - M[8]
+	    f = 2*Math.sqrt(t);
+	    q = new Float32Array([(M[6]-M[2])/f, (M[1]+M[3])/f, t/f, (M[5]+M[7])/f]);
+	}
+    }
+    else if (M[0] < -M[4]) {
+	t = 1 - M[0] - M[4] + M[8];
+	f = 2*Math.sqrt(t);
+	q = new Float32Array([(M[1]-M[3])/f, (M[6]+M[2])/f, (M[5]+M[7])/f, t/f]);
+    }
+    else {
+	t = 1 + M[0] + M[4] + M[8];
+	f = 2*Math.sqrt(t);
+	q = new Float32Array([t/f, (M[5]-M[7])/f, (M[6]-M[2])/f, (M[1]-M[3])/f]);
+    }
+    return q;
+}
+
+function quaternion_to_matrix(q) {
+    let M = new Float32Array(9);
+    M[0] = 1 - 2*(q[2]*q[2] + q[3]*q[3]);
+    M[1] = 2*(q[1]*q[2] + q[3]*q[0]);
+    M[2] = 2*(q[1]*q[3] - q[2]*q[0]);
+    M[3] = 2*(q[1]*q[2] - q[3]*q[0]);
+    M[4] = 1 - 2*(q[1]*q[1] + q[3]*q[3]);
+    M[5] = 2*(q[2]*q[3] + q[1]*q[0]);
+    M[6] = 2*(q[1]*q[3] + q[2]*q[0]);
+    M[7] = 2*(q[2]*q[3] - q[1]*q[0]);
+    M[8] = 1 - 2*(q[1]*q[1] + q[2]*q[2]);
+    return M;
+}
+
+function quaternion_normalize(q) {
+    return quaternion_scale(1/Math.sqrt(quaternion_dot(q,q)), q);
+}
+
+function quaternion_scale(a, q) {
+    let r = new Float32Array(q);
+    r[0] *= a;
+    r[1] *= a;
+    r[2] *= a;
+    r[3] *= a;
+    return r;
+}
+
+function quaternion_add(q1, q2) {
+    let q = new Float32Array(4);
+    q[0] = q1[0] + q2[0];
+    q[1] = q1[1] + q2[1];
+    q[2] = q1[2] + q2[2];
+    q[3] = q1[3] + q2[3];
+    return q;
+}
+
+function quaternion_dot(q1, q2) {
+    return q1[0]*q2[0] + q1[1]*q2[1] + q1[2]*q2[2] + q1[3]*q2[3];
+}
+
+function quaternion_negate(q) {
+    return new Float32Array([-q[0], -q[1], -q[2], -q[3]]);
+}
+
+function slerp(q1, q2, scale) {
+    let d = quaternion_dot(q1, q2);
+    if (d < 0) {
+	q1 = quaternion_negate(q1);
+	d = -d;
+    }
+    if (d > 0.9995) {
+	q1 = quaternion_scale(1-scale, q1);
+	q2 = quaternion_scale(scale, q2);
+	q1 = quaternion_add(q1, q2);
+	return quaternion_normalize(q1);
+    }
+    let t0 = Math.acos(d);
+    let t = t0*scale;
+    let st = Math.sin(t);
+    let st0 = Math.sin(t0);
+    let s0 = Math.cos(t) - d*st/st0;
+    let s1 = st/st0;
+    q1 = quaternion_scale(s0, q1);
+    q2 = quaternion_scale(s1, q2);
+    return quaternion_add(q1, q2);
+}
+
+
+    
 

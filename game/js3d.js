@@ -74,6 +74,10 @@ export class Translate {
 let _movable;
 
 function key_down(event) {
+    let theta = 0;
+    let ct = 0;
+    let st = 0;
+    
     switch (event.code) {
     case "ArrowDown":
     case "KeyS":
@@ -89,9 +93,9 @@ function key_down(event) {
 	break;
     case "ArrowRight":
     case "KeyD":
-	var theta = Math.PI/60.0; // one rotation per second
-	var ct = Math.cos(theta);
-	var st = Math.sin(theta);
+	theta = Math.PI/60.0; // one rotation per second
+	ct = Math.cos(theta);
+	st = Math.sin(theta);
 	
 	_movable[0] = ct;
 	_movable[1] = 0
@@ -105,9 +109,9 @@ function key_down(event) {
 	break;
     case "ArrowLeft":
     case "KeyA":
-	var theta = Math.PI/60.0; // one rotation per second
-	var ct = Math.cos(theta);
-	var st = Math.sin(theta);
+	theta = Math.PI/60.0; // one rotation per second
+	ct = Math.cos(theta);
+	st = Math.sin(theta);
 	
 	_movable[0] = ct;
 	_movable[1] = 0
@@ -1331,16 +1335,43 @@ export class Follower {
     }
 
     draw(gl, t) {
+	let scale = 0.05;
+
 	let x1 = new Float32Array(this.followee.transform);
 
-	x1[9] += 2*x1[3] + 10*x1[6];
-	x1[10] += 2*x1[4] + 10*x1[7];
-	x1[11] += 2*x1[5] + 10*x1[8];
-	
-	this.location = x1;
-	
+	x1[9] += 2*x1[3] + 15*x1[6];
+	x1[10] += 2*x1[4] + 15*x1[7];
+	x1[11] += 2*x1[5] + 15*x1[8];
+
+	/*
+	  x1 the transform we want to move to
+	  this.location the current transform
+	*/
+
+	// translation is the easy part;
+
+	x1[9] = scale*x1[9] + (1-scale)*this.location[9];
+	x1[10] = scale*x1[10] + (1-scale)*this.location[10];
+	x1[11] = scale*x1[11] + (1-scale)*this.location[11];
+
+	let x2 = mm.interpolate_rotation(this.location, x1, scale);
+
+	this.location[0] = x2[0];
+	this.location[1] = x2[1];
+	this.location[2] = x2[2];
+	this.location[3] = x2[3];
+	this.location[4] = x2[4];
+	this.location[5] = x2[5];
+	this.location[6] = x2[6];
+	this.location[7] = x2[7];
+	this.location[8] = x2[8];
+	this.location[9] = x1[9];
+	this.location[10] = x1[10];
+	this.location[11] = x1[11];
+
 	g.clear_screen(gl);
 	let v = build_view(gl, this.fov, this.location);
 	this.object.draw(gl, v, t);
     }
 }
+

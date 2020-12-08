@@ -30,7 +30,7 @@ function build_stage(gl) {
 	1, 0, 0,
 	0, 1, 0,
 	0, 0, 1,
-	25, 2, 45]);
+	25, 4, 65]);
     
     return new js3d.Follower(scene, Math.PI/4, camera_location, plr);
 }
