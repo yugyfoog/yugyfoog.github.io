@@ -15,6 +15,7 @@ function main() {
 
 function display(time) {
     requestAnimationFrame(display);
+    js3d.update_physical_objects();
     stage.draw(gl, time);
 }
 

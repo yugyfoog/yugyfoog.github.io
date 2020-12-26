@@ -288,6 +288,6 @@ function slerp(q1, q2, scale) {
     return quaternion_add(q1, q2);
 }
 
-
-    
-
+export function distance(u, v) {
+    return Math.sqrt((u[0]-v[0])*(u[0]-v[0]) + (u[1]-v[1])*(u[1]-v[1]) + (u[2]-v[2])*(u[2]-v[2]));
+}

@@ -2,15 +2,36 @@ import * as g from "./graphics.js";
 import * as mm from "./mmath.js";
 import * as room from "./room.js";
 
+let physical_objects = new Array();
+
+export function update_physical_objects() {
+    move_back[0] = 0;
+    move_back[1] = 0;
+    move_back[2] = 0;
+    for (let i = 0; i < physical_objects.length - 1; i++) {
+	for (let j = i+1; j < physical_objects.length; j++) {
+	    if (physical_objects[i].check_collision(physical_objects[j])) {
+		physical_objects[i].collision(physical_objects[j]);
+		physical_objects[j].collision(physical_objects[i]);
+	    }
+	}
+    }
+    physical_objects.length = 0;
+}
+
 export class Group {
     constructor() {
-	this.branch = Array();
+	this.branch = new Set();
     }
 
     add_object(obj) {
-	this.branch.push(obj);
+	this.branch.add(obj);
     }
 
+    remove_object(obj) {
+	this.branch.delete(obj);
+    }
+    
     draw(gl, view, time) {
 	for (let obj of this.branch) {
 	    obj.draw(gl, view, time);
@@ -34,6 +55,296 @@ export class Orthogonal {
 				mm.multiply_linear_affine(this.transform, view.M),
 				mm.multiply_linear_linear(this.transform, view.N));
 	this.object.draw(gl, new_view, time);
+    }
+}
+
+let move_back = new Float32Array(3);
+
+export class Physical_Sphere {
+    constructor(obj, r) {
+	this.object = obj;
+	this.radius = r;
+	this.location = new Float32Array(3);
+	this.parent = null;
+    }
+
+    check_collision(obj) {
+	return obj.check_collision_sphere(this);
+    }
+
+    check_collision_sphere(obj) {
+	let d = mm.distance(this.location, obj.location);
+	return d < this.radius + obj.radius
+    }
+
+    check_collision_wall(obj) {
+	// this is a sphere
+	// obj is a wall
+	
+	// c = this.location - obj.u0
+
+	let c = new Float32Array(3);
+	c[0] = this.location[0] - obj.u0[0];
+	c[1] = this.location[1] - obj.u0[1];
+	c[2] = this.location[2] - obj.u0[2];
+
+	// first check corners
+
+	let p = new Float32Array([0, 0, 0]);
+	
+	let d = mm.distance(p, c);
+	if (d < this.radius) {
+	    let fix = (this.radius - d)/d;
+	    move_back[0] += fix*c[0];
+	    move_back[1] += fix*c[1];
+	    move_back[2] += fix*c[2];
+	    return true;
+	}
+	d = mm.distance(obj.u1, c);
+	if (d < this.radius) {
+	    let fix = (this.radius - d)/d;
+	    move_back[0] += fix*(c[0] - obj.u1[0]);
+	    move_back[1] += fix*(c[1] - obj.u1[1]);
+	    move_back[2] += fix*(c[2] - obj.u1[2]);
+	    return true;
+	}
+	d = mm.distance(obj.u2, c);
+	if (d < this.radius) {
+	    let fix = (this.radius - d)/d;
+	    move_back[0] += fix*(c[0] - obj.u2[0]);
+	    move_back[1] += fix*(c[1] - obj.u2[1]);
+	    move_back[2] += fix*(c[2] - obj.u2[2]);
+	    return true;
+	}
+	p[0] = obj.u1[0] + obj.u2[0];
+	p[1] = obj.u1[1] + obj.u2[1];
+	p[2] = obj.u1[2] + obj.u2[2];
+	d = mm.distance(p, c);
+	if (d < this.radius) {
+	    let fix = (this.radius - d)/d;
+	    move_back[0] += fix*(c[0] - p[0]);
+	    move_back[1] += fix*(c[1] - p[1]);
+	    move_back[2] += fix*(c[2] - p[2]);
+	    return true;
+	}
+
+	// second check edges
+
+	// t1 = u.v (dot product)
+
+	let t1 = c[0]*obj.u1[0] + c[1]*obj.u1[1] + c[2]*obj.u1[2];
+
+	// t2 = u.u
+
+	let t2 = obj.u1[0]*obj.u1[0] + obj.u1[1]*obj.u1[1] + obj.u1[2]*obj.u1[2];
+
+	// t1 = t1/t2
+	
+	t1 = t1/t2;
+
+	// right now if t1 is outside the range [0,1] then no collision (with this edge)
+
+	if (0 < t1 && t1 < 1)  {
+	
+	    // p = t1*u
+	
+	    p[0] = t1*obj.u1[0];
+	    p[1] = t1*obj.u1[1];
+	    p[2] = t1*obj.u1[2];
+
+	    d = mm.distance(p, c);
+	    if (d < this.radius) {
+		let fix = (this.radius - d)/d;
+		move_back[0] += fix*(c[0] - p[0]);
+		move_back[1] += fix*(c[1] - p[1]);
+		move_back[2] += fix*(c[2] - p[2]);
+		return true;
+	    }
+	}
+
+	// check other edges
+	
+	t1 = c[0]*obj.u2[0] + c[1]*obj.u2[1] + c[2]*obj.u2[2];
+	t2 = obj.u2[0]*obj.u2[0] + obj.u2[1]*obj.u2[1] + obj.u2[2]*obj.u2[2];
+	t1 = t1/t2;
+	if (0 < t1 && t1 < 1)  {
+	    p[0] = t1*obj.u2[0];
+	    p[1] = t1*obj.u2[1];
+	    p[2] = t1*obj.u2[2];
+
+	    d = mm.distance(p, c);
+	    if (d < this.radius) {
+		let fix = (this.radius - d)/d;
+		move_back[0] += fix*(c[0] - p[0]);
+		move_back[1] += fix*(c[1] - p[1]);
+		move_back[2] += fix*(c[2] - p[2]);
+		return true;
+	    }
+	}
+
+	let q = new Float32Array(3);
+	q[0] = c[0] - obj.u2[0];
+	q[1] = c[1] - obj.u2[1];
+	q[2] = c[2] - obj.u2[2];
+
+	t1 = q[0]*obj.u1[0] + q[1]*obj.u1[1] + q[2]*obj.u1[2];
+	t2 = obj.u1[0]*obj.u1[0] + obj.u1[1]*obj.u1[1] + obj.u1[2]*obj.u1[2];
+	t1 = t1/t2;
+	if (0 < t1 && t1 < 1)  {
+	    p[0] = t1*obj.u1[0];
+	    p[1] = t1*obj.u1[1];
+	    p[2] = t1*obj.u1[2];
+	    d = mm.distance(p, c);
+	    if (d < this.radius) {
+		let fix = (this.radius - d)/d;
+		move_back[0] += fix*(c[0] - p[0]);
+		move_back[1] += fix*(c[1] - p[1]);
+		move_back[2] += fix*(c[2] - p[2]);
+		return true;
+	    }
+	}
+
+	q[0] = c[0] - obj.u1[0];
+	q[1] = c[1] - obj.u1[1];
+	q[2] = c[2] - obj.u1[2];
+	t1 = q[0]*obj.u2[0] + q[1]*obj.u2[1] + q[2]*obj.u2[2];
+	t2 = obj.u2[0]*obj.u2[0] + obj.u2[1]*obj.u2[1] + obj.u2[2]*obj.u2[2];
+	t1 = t1/t2;
+	if (0 < t1 && t1 < 1)  {
+	    p[0] = t1*obj.u2[0];
+	    p[1] = t1*obj.u2[1];
+	    p[2] = t1*obj.u2[2];
+
+	    d = mm.distance(p, c);
+	    if (d < this.radius) {
+		let fix = (this.radius - d)/d;
+		move_back[0] += fix*(c[0] - p[0]);
+		move_back[1] += fix*(c[1] - p[1]);
+		move_back[2] += fix*(c[2] - p[2]);
+		return true;
+	    }
+	}
+
+	// M is a matrix with obj.u1 and obj.u2 as columns vectors
+
+	//  t(M)*M =
+	//    u w
+	//    w v
+	
+	let u = obj.u1[0]*obj.u1[0] + obj.u1[1]*obj.u1[1] + obj.u1[2]*obj.u1[2];
+	let v = obj.u2[0]*obj.u2[0] + obj.u2[1]*obj.u2[1] + obj.u2[2]*obj.u2[2];
+	let w = obj.u1[0]*obj.u2[0] + obj.u1[1]*obj.u2[1] + obj.u1[2]*obj.u2[2];
+
+	// inv(t(M)*M) =
+	//    u1 w1
+	//    w1 v1
+
+	d = u*v - w*w;
+	let u1 = v/d;
+	let v1 = u/d;
+	let w1 = -w/d;
+
+	// p = inv(t(M)*M)*t(M) 
+
+	p = new Float32Array(6);                     // note: redefining p
+	p[0] = u1*obj.u1[0] + w1*obj.u2[0];
+	p[1] = w1*obj.u1[0] + v1*obj.u2[0];
+	p[2] = u1*obj.u1[1] + w1*obj.u2[1];
+	p[3] = w1*obj.u1[1] + v1*obj.u2[1];
+	p[4] = u1*obj.u1[2] + w1*obj.u2[2];
+	p[5] = w1*obj.u1[2] + v1*obj.u2[2];
+	
+	// v1 = p*c
+	
+	v1 = new Float32Array(2);                 // redefining v1
+	v1[0] = p[0]*c[0] + p[2]*c[1] + p[4]*c[2];
+	v1[1] = p[1]*c[0] + p[3]*c[1] + p[5]*c[2];
+
+	if (0 < v1[0] && v1[0] < 1
+	    && 0 < v1[1] && v1[1] < 1) {
+	
+	// cp = M*v1
+
+	    let cp = new Float32Array(3);
+	    cp[0] = v1[0]*obj.u1[0] + v1[1]*obj.u2[0];
+	    cp[1] = v1[0]*obj.u1[1] + v1[1]*obj.u2[1];
+	    cp[2] = v1[0]*obj.u1[2] + v1[1]*obj.u2[2];
+	    
+	    d = mm.distance(cp, c);
+	    if (d < this.radius) {
+		let fix = (this.radius - d)/d;
+		move_back[0] += fix*(c[0] - cp[0]);
+		move_back[1] += fix*(c[1] - cp[1]);
+		move_back[2] += fix*(c[2] - cp[2]);
+		return true;
+	    }
+	}
+
+	return false;
+    }
+    
+    collision(obj) {
+	;
+    }
+    
+    draw(gl, view, time) {
+	this.location[0] = view.M[9];
+	this.location[1] = view.M[10];
+	this.location[2] = view.M[11];
+
+	physical_objects.push(this);
+
+	this.object.draw(gl, view, time);
+    }
+}
+
+export class Physical_Sphere_Remove extends Physical_Sphere {
+    constructor(obj, r, p) {
+	super(obj, r);
+	this.parent = p;
+	this.container = null;
+    }
+
+    set_removable(c) {
+	this.container = c;
+    }
+    
+    collision(obj) {
+	this.parent.remove_object(this.container);
+    }
+}
+
+export class Physical_Wall {
+    constructor(obj, a, b, c) {
+	this.object = obj;
+	this.u0 = a;
+	this.u1 = b;
+	this.u2 = c;
+    }
+
+    check_collision(obj) {
+	return obj.check_collision_wall(this);
+    }
+
+    check_collision_sphere(obj) {
+	console.log("Physical_Wall: check collision sphere");
+	return false;
+    }
+    
+    check_collision_wall(obj) {
+	console.log("Physical_Wall: check collision wall");
+	return false;
+    }
+    
+    collision(obj) {
+	console.log("Physical_Wall: collision()");
+	// stop whatever object
+	obj.parent.move = false;
+    }
+    
+    draw(gl, view, time) {
+	physical_objects.push(this);
+	this.object.draw(gl, view, time);
     }
 }
 
@@ -71,7 +382,8 @@ export class Translate {
 }
 
 
-let _movable;
+let forward = 0;
+let turn = 0;
 
 function key_down(event) {
     let theta = 0;
@@ -81,47 +393,19 @@ function key_down(event) {
     switch (event.code) {
     case "ArrowDown":
     case "KeyS":
-	_movable[9] = 0.1*_movable[6];
-	_movable[10] = 0.1*_movable[7];
-	_movable[11] = 0.1*_movable[8];
+	forward = -1;
         break;
     case "ArrowUp":
     case "KeyW":
-	_movable[9] = -0.1*_movable[6];
-	_movable[10] = -0.1*_movable[7];
-	_movable[11] = -0.1*_movable[8];
+	forward = 1;
 	break;
     case "ArrowRight":
     case "KeyD":
-	theta = Math.PI/60.0; // one rotation per second
-	ct = Math.cos(theta);
-	st = Math.sin(theta);
-	
-	_movable[0] = ct;
-	_movable[1] = 0
-	_movable[2] = st;
-	_movable[3] = 0;
-	_movable[4] = 1;
-	_movable[5] = 0;
-	_movable[6] = -st;
-	_movable[7] = 0;
-	_movable[8] = ct;
+	turn = -1;
 	break;
     case "ArrowLeft":
     case "KeyA":
-	theta = Math.PI/60.0; // one rotation per second
-	ct = Math.cos(theta);
-	st = Math.sin(theta);
-	
-	_movable[0] = ct;
-	_movable[1] = 0
-	_movable[2] = -st;
-	_movable[3] = 0;
-	_movable[4] = 1;
-	_movable[5] = 0;
-	_movable[6] = st;
-	_movable[7] = 0;
-	_movable[8] = ct;
+	turn = 1;
 	break;
     }
 }
@@ -131,43 +415,70 @@ function key_up(event) {
     switch (event.code) {
     case "ArrowDown":
     case "KeyS":
-	_movable[9] = 0;
-	_movable[10] = 0;
-	_movable[11] = 0;
-	break;
     case "ArrowUp":
     case "KeyW":
-	_movable[9] = 0;
-	_movable[10] = 0;
-	_movable[11] = 0;
+	forward = 0;
 	break;
     case "ArrowRight":
     case "KeyD":
     case "ArrowLeft":
     case "KeyA":
-	_movable[0] = 1;
-	_movable[1] = 0;
-	_movable[2] = 0;
-	_movable[3] = 0;
-	_movable[4] = 1;
-	_movable[5] = 0;
-	_movable[6] = 0;
-	_movable[7] = 0;
-	_movable[8] = 1;
+	turn = 0;
+	break;
     }
 }
 
 export class Movable {
     constructor(obj, trans) {
 	this.object = obj;
+	obj.parent = this;
 	this.transform = trans;  // trans must be an orthogonal affine transform
-	_movable = new Float32Array([1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0]);
+	this.move = true;        // set this to false if we don't move while key is pressed
 	document.addEventListener("keydown", key_down);
 	document.addEventListener("keyup", key_up);
     }
     
     draw(gl, view, time) {
-	this.transform = mm.multiply_affine_affine(this.transform, _movable);
+	// _movable is how we want to move
+	// we need to change this if colliding with an unmovable object.
+
+	if (forward != 0 || turn != 0) {
+	    let move = new Float32Array([1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0]);
+	    if (forward == 1)
+		move[11] = -0.1;
+	    else if (forward == -1)
+		move[11] = 0.1;
+	    if (turn == 1) {
+		let theta = Math.PI/60.0;
+		let ct = Math.cos(theta);
+		let st = Math.sin(theta);
+		move[0] = ct;
+		move[2] = -st;
+		move[4] = 1;
+		move[6] = st;
+		move[8] = ct;
+	    }
+	    else if (turn == -1) {
+		let theta = Math.PI/60.0;
+		let ct = Math.cos(theta);
+		let st = Math.sin(theta);
+		move[0] = ct;
+		move[2] = st;
+		move[4] = 1;
+		move[6] = -st;
+		move[8] = ct;
+	    }
+	    if (this.move)
+		this.transform = mm.multiply_affine_affine(this.transform, move);
+	    else {
+		this.transform = mm.multiply_affine_affine(this.transform, move);
+		this.transform[9] += move_back[0];
+		this.transform[10] += move_back[1];
+		this.transform[11] += move_back[2];
+		this.move = true;
+	    }
+	    this.last_forward = this.next_forward;
+	}
 	let new_view = new View(view.P,
 				view.C,
 				mm.multiply_affine_affine(view.M, this.transform),
@@ -315,7 +626,7 @@ export class Tetrahedron {
 	gl.bufferData(gl.ARRAY_BUFFER, this.normals, gl.STATIC_DRAW);
 
     }
-    
+
     draw(gl, view, time) {
 	gl.useProgram(this.program);
 
